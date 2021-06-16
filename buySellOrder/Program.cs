@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using Newtonsoft.Json;
 
 namespace buySellOrder
@@ -14,7 +16,7 @@ namespace buySellOrder
         public decimal Price { get; set; }
     }
 
-    class Program
+    public class Program
     {
         static void Main(string[] args)
         {
@@ -25,9 +27,14 @@ namespace buySellOrder
             string type = Console.ReadLine();
             Console.Write("Enter BTC amount: ");
             string number = Console.ReadLine();
-            bestExecution(number, type);
+
+            foreach (OrderBookItem trade in bestExecution(number, type))
+            {
+                Console.WriteLine(type + " " + trade.Amount.ToString() + " on exchange " + trade.Exchange);
+
+            }
         }
-        public static void bestExecution(string number, string type)
+        public static List<OrderBookItem> bestExecution(string number, string type)
         {
             decimal amount;
             bool success = decimal.TryParse(number, out amount);
@@ -43,7 +50,8 @@ namespace buySellOrder
 
             // error if type not buy or sell
 
-            string[] lines = System.IO.File.ReadAllLines("order_books_data.txt");
+            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), @"order_books_data.txt");
+            string[] lines = System.IO.File.ReadAllLines(path);
             int lineNumber = 0;
             List<OrderBookItem> orders = new List<OrderBookItem>();
             foreach (string line in lines)
@@ -86,11 +94,7 @@ namespace buySellOrder
                 sortedList = orders.OrderBy(o => o.Price).ToList();
             }
 
-            foreach(OrderBookItem trade in getItemsFromOrderBooks(amount, sortedList))
-            {
-                Console.WriteLine(type + " " + trade.Amount.ToString() + " on exchange " + trade.Exchange);
-
-            }
+            return getItemsFromOrderBooks(amount, sortedList);
      
         }
 
